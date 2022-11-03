@@ -12,9 +12,11 @@ import 'callback_dispatcher.dart';
 import 'keys.dart';
 import 'location_dto.dart';
 
+@pragma('vm:entry-point')
 class BackgroundLocator {
   static const MethodChannel _channel = const MethodChannel(Keys.CHANNEL_ID);
 
+  @pragma('vm:entry-point')
   static Future<void> initialize() async {
     final CallbackHandle callback =
         PluginUtilities.getCallbackHandle(callbackDispatcher)!;
@@ -52,6 +54,7 @@ class BackgroundLocator {
     await _channel.invokeMethod(Keys.METHOD_PLUGIN_UN_REGISTER_LOCATION_UPDATE);
   }
 
+  @pragma('vm:entry-point')
   static Future<bool> isRegisterLocationUpdate() async {
     return (await _channel
         .invokeMethod<bool>(Keys.METHOD_PLUGIN_IS_REGISTER_LOCATION_UPDATE))!;
