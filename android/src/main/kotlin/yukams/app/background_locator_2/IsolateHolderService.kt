@@ -156,6 +156,7 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
                 shutdownHolderService()
             }
             ACTION_START == intent?.action -> {
+                Log.e("Back", "PUNTOO: Action start called, serviceRunning: ${isServiceRunning}")
                 if (isServiceRunning) {
                     isServiceRunning = false
                     shutdownHolderService()
@@ -266,6 +267,7 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        Log.e("Puntoo", "PUNTOO: MethodCall: ${call.method}")
         try {
             when (call.method) {
                 Keys.METHOD_SERVICE_INITIALIZED -> {
@@ -294,6 +296,7 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     override fun onLocationUpdated(location: HashMap<Any, Any?>?) {
+        Log.e("Puntoo", "PUNTOO: OnLocationUpdatet")
         try {
             context?.let {
                 FlutterInjector.instance().flutterLoader().ensureInitializationComplete(
@@ -323,11 +326,12 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
                 sendLocationEvent(result)
             }
         } catch (e: Exception) {
-
+            Log.e("IsolateHolderService", "PUNTOO: ${e.message}")
         }
     }
 
     private fun sendLocationEvent(result: HashMap<Any, Any>) {
+        Log.e("Puntoo", "PUNTOO: sendLocationEvent")
         //https://github.com/flutter/plugins/pull/1641
         //https://github.com/flutter/flutter/issues/36059
         //https://github.com/flutter/plugins/pull/1641/commits/4358fbba3327f1fa75bc40df503ca5341fdbb77d

@@ -37,10 +37,6 @@ class BackgroundLocator {
       _widgetsBinding!.addObserver(AutoStopHandler());
     }
 
-    if (initCallback != null){
-      initCallback({});
-    }
-
     final args = SettingsUtil.getArgumentsMap(
         callback: callback,
         initCallback: initCallback,

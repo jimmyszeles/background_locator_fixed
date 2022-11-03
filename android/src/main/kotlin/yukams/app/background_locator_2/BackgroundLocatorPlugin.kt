@@ -232,6 +232,7 @@ class BackgroundLocatorPlugin
             }
             Keys.METHOD_PLUGIN_REGISTER_LOCATION_UPDATE -> {
                 val args: Map<Any, Any>? = call.arguments()
+                Log.e("PUNTOO", "PUNTOO: METHOD_PLUGIN_REGISTER_LOCATION_UPDATE called")
 
                 // save setting to use it when device reboots
 

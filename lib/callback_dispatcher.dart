@@ -13,13 +13,27 @@ void callbackDispatcher() {
   WidgetsFlutterBinding.ensureInitialized();
 
   _backgroundChannel.setMethodCallHandler((MethodCall call) async {
+
+    print("PUNTOO: methodCallHandler ${call.method}, ${call.arguments.toString()}");
+    print("PUNTOO: methodCallHandler ${Keys.BCM_SEND_LOCATION == call.method ? 'isSendLocation = true' : 'isSendLocation = false'}");
+
+
     if (Keys.BCM_SEND_LOCATION == call.method) {
       final Map<dynamic, dynamic> args = call.arguments;
-      final Function callback = PluginUtilities.getCallbackFromHandle(
-          CallbackHandle.fromRawHandle(args[Keys.ARG_CALLBACK]))!;
+
+      print("PUNTOO: Before callback function created");
+      final Function? callback = PluginUtilities.getCallbackFromHandle(
+          CallbackHandle.fromRawHandle(args[Keys.ARG_CALLBACK]));
+
+
+      print("PUNTOO: After callback function created - Callback: ${callback == null ? '0' : '1'}");
+
       final LocationDto location =
           LocationDto.fromJson(args[Keys.ARG_LOCATION]);
-      callback(location);
+
+      print("PUNTOO: methodCallHandler - Callback: ${callback == null ? '0' : '1'} - location: ${location.toJson()}");
+
+      callback!(location);
     } else if (Keys.BCM_NOTIFICATION_CLICK == call.method) {
       final Map<dynamic, dynamic> args = call.arguments;
       final Function? notificationCallback =
