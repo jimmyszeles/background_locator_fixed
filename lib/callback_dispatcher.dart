@@ -39,6 +39,8 @@ void callbackDispatcher() {
       final Function? notificationCallback =
           PluginUtilities.getCallbackFromHandle(CallbackHandle.fromRawHandle(
               args[Keys.ARG_NOTIFICATION_CALLBACK]));
+
+      print("PUNTOO: methodCallHandler - Notification Callback: ${notificationCallback == null ? '0' : '1'}");
       if (notificationCallback != null) {
         notificationCallback();
       }
