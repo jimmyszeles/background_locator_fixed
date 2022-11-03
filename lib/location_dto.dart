@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'keys.dart';
 
+@pragma("vm:entry-point")
 class LocationDto {
   final double latitude;
   final double longitude;

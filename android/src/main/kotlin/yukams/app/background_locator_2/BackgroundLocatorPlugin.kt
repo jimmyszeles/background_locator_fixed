@@ -99,7 +99,6 @@ class BackgroundLocatorPlugin
 
         @JvmStatic
         private fun startIsolateService(context: Context, settings: Map<*, *>) {
-            Log.e("BackgroundLocatorPlugin", "startIsolateService")
             val intent = Intent(context, IsolateHolderService::class.java)
             intent.action = IsolateHolderService.ACTION_START
             intent.putExtra(Keys.SETTINGS_ANDROID_NOTIFICATION_CHANNEL_NAME,
@@ -224,16 +223,11 @@ class BackgroundLocatorPlugin
                    // save callback dispatcher to use it when device reboots
                 PreferencesManager.saveCallbackDispatcher(context!! , args!!)
 
-
-
-
                 initializeService(context!!, args)
                 result.success(true)
             }
             Keys.METHOD_PLUGIN_REGISTER_LOCATION_UPDATE -> {
                 val args: Map<Any, Any>? = call.arguments()
-                Log.e("PUNTOO", "PUNTOO: METHOD_PLUGIN_REGISTER_LOCATION_UPDATE called")
-
                 // save setting to use it when device reboots
 
                 PreferencesManager.saveSettings(context!!, args!!)

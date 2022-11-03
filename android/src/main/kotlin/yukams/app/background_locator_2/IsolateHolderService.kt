@@ -156,7 +156,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
                 shutdownHolderService()
             }
             ACTION_START == intent?.action -> {
-                Log.e("Back", "PUNTOO: Action start called, serviceRunning: ${isServiceRunning}")
                 if (isServiceRunning) {
                     isServiceRunning = false
                     shutdownHolderService()
@@ -178,7 +177,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     private fun startHolderService(intent: Intent) {
-        Log.e("IsolateHolderService", "startHolderService")
         notificationChannelName =
             intent.getStringExtra(Keys.SETTINGS_ANDROID_NOTIFICATION_CHANNEL_NAME).toString()
         notificationTitle =
@@ -212,7 +210,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     private fun shutdownHolderService() {
-        Log.e("IsolateHolderService", "shutdownHolderService")
         (getSystemService(Context.POWER_SERVICE) as PowerManager).run {
             newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WAKELOCK_TAG).apply {
                 if (isHeld) {
@@ -231,7 +228,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     private fun updateNotification(intent: Intent) {
-        Log.e("IsolateHolderService", "updateNotification")
         if (intent.hasExtra(Keys.SETTINGS_ANDROID_NOTIFICATION_TITLE)) {
             notificationTitle =
                 intent.getStringExtra(Keys.SETTINGS_ANDROID_NOTIFICATION_TITLE).toString()
@@ -267,7 +263,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
-        Log.e("Puntoo", "PUNTOO: MethodCall: ${call.method}")
         try {
             when (call.method) {
                 Keys.METHOD_SERVICE_INITIALIZED -> {
@@ -296,7 +291,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
     }
 
     override fun onLocationUpdated(location: HashMap<Any, Any?>?) {
-        Log.e("Puntoo", "PUNTOO: OnLocationUpdatet")
         try {
             context?.let {
                 FlutterInjector.instance().flutterLoader().ensureInitializationComplete(
@@ -304,10 +298,6 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
                 )
             }
 
-            //https://github.com/flutter/plugins/pull/1641
-            //https://github.com/flutter/flutter/issues/36059
-            //https://github.com/flutter/plugins/pull/1641/commits/4358fbba3327f1fa75bc40df503ca5341fdbb77d
-            // new version of flutter can not invoke method from background thread
             if (location != null) {
                 val callback =
                     context?.let {
@@ -326,17 +316,11 @@ class IsolateHolderService : MethodChannel.MethodCallHandler, LocationUpdateList
                 sendLocationEvent(result)
             }
         } catch (e: Exception) {
-            Log.e("IsolateHolderService", "PUNTOO: ${e.message}")
+
         }
     }
 
     private fun sendLocationEvent(result: HashMap<Any, Any>) {
-        Log.e("Puntoo", "PUNTOO: sendLocationEvent")
-        //https://github.com/flutter/plugins/pull/1641
-        //https://github.com/flutter/flutter/issues/36059
-        //https://github.com/flutter/plugins/pull/1641/commits/4358fbba3327f1fa75bc40df503ca5341fdbb77d
-        // new version of flutter can not invoke method from background thread
-
         if (backgroundEngine != null) {
             context?.let {
                 val backgroundChannel =
