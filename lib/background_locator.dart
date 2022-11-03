@@ -53,7 +53,6 @@ class BackgroundLocator {
     await _channel.invokeMethod(Keys.METHOD_PLUGIN_UN_REGISTER_LOCATION_UPDATE);
   }
 
-  @pragma('vm:entry-point')
   static Future<bool> isRegisterLocationUpdate() async {
     return (await _channel
         .invokeMethod<bool>(Keys.METHOD_PLUGIN_IS_REGISTER_LOCATION_UPDATE))!;
