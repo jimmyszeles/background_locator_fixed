@@ -3,7 +3,7 @@ description: Demonstrates how to use the background_locator_2 plugin.
 publish_to: 'none'
 
 environment:
-  sdk: ">=2.8.0 <3.0.0"
+  sdk: ">=2.12.0 <3.0.0"
 
 dependencies:
   flutter:
@@ -20,7 +20,7 @@ dev_dependencies:
   background_locator_2:
     path: ../
 
-  path_provider: ^2.0.8
+  path_provider: ^2.0.13
   location_permissions: ^3.0.0+1
 
 # For information on the generic Dart part of this file, see the
