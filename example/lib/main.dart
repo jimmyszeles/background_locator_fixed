@@ -25,8 +25,8 @@ class _MyAppState extends State<MyApp> {
   ReceivePort port = ReceivePort();
 
   String logStr = '';
-  bool isRunning;
-  LocationDto lastLocation;
+  bool isRunning = false;
+  LocationDto? lastLocation;
 
   @override
   void initState() {
@@ -58,8 +58,11 @@ class _MyAppState extends State<MyApp> {
   Future<void> updateUI(dynamic data) async {
     final log = await FileManager.readLogFile();
 
-    LocationDto locationDto = (data != null) ? LocationDto.fromJson(data) : null;
-    await _updateNotificationText(locationDto);
+    LocationDto? locationDto =
+        (data != null) ? LocationDto.fromJson(data) : null;
+    if (locationDto != null) {
+      await _updateNotificationText(locationDto);
+    }
 
     setState(() {
       if (data != null) {
@@ -70,10 +73,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _updateNotificationText(LocationDto data) async {
-    if (data == null) {
-      return;
-    }
-
     await BackgroundLocator.updateNotificationText(
         title: "new location received",
         msg: "${DateTime.now()}",
@@ -137,6 +136,8 @@ class _MyAppState extends State<MyApp> {
     final log = Text(
       logStr,
     );
+    final locationWidget = lastLocation == null ? Text('No location') :
+        Text('${lastLocation!.latitude} - ${lastLocation!.longitude}');
 
     return MaterialApp(
       home: Scaffold(
@@ -149,7 +150,7 @@ class _MyAppState extends State<MyApp> {
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[start, stop, clear, status, log],
+              children: <Widget>[start, stop, clear, status, log, locationWidget],
             ),
           ),
         ),
@@ -203,17 +204,17 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> _startLocator() async{
+  Future<void> _startLocator() async {
     Map<String, dynamic> data = {'countInit': 1};
-    return await BackgroundLocator.registerLocationUpdate(LocationCallbackHandler.callback,
+    return await BackgroundLocator.registerLocationUpdate(
+        LocationCallbackHandler.callback,
         initCallback: LocationCallbackHandler.initCallback,
         initDataCallback: data,
         disposeCallback: LocationCallbackHandler.disposeCallback,
         iosSettings: IOSSettings(
             accuracy: LocationAccuracy.NAVIGATION,
             distanceFilter: 0,
-            stopWithTerminate: true
-        ),
+            stopWithTerminate: true),
         autoStop: false,
         androidSettings: AndroidSettings(
             accuracy: LocationAccuracy.NAVIGATION,
