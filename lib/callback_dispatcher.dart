@@ -33,7 +33,9 @@ void callbackDispatcher() {
 
       print("PUNTOO: methodCallHandler - Callback: ${callback == null ? '0' : '1'} - location: ${location.toJson()}");
 
-      callback!(location);
+      if (callback != null) {
+        callback(location);
+      }
     } else if (Keys.BCM_NOTIFICATION_CLICK == call.method) {
       final Map<dynamic, dynamic> args = call.arguments;
       final Function? notificationCallback =
