@@ -9,6 +9,7 @@ class AutoStopHandler extends WidgetsBindingObserver {
       case AppLifecycleState.inactive:
       case AppLifecycleState.paused:
       case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
         await BackgroundLocator.unRegisterLocationUpdate();
         break;
       case AppLifecycleState.resumed:

@@ -8,7 +8,7 @@ import 'package:background_locator_2/settings/android_settings.dart';
 import 'package:background_locator_2/settings/ios_settings.dart';
 import 'package:background_locator_2/settings/locator_settings.dart';
 import 'package:flutter/material.dart';
-import 'package:location_permissions/location_permissions.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'file_manager.dart';
 import 'location_callback_handler.dart';
@@ -124,20 +124,19 @@ class _MyAppState extends State<MyApp> {
       ),
     );
     String msgStatus = "-";
-    if (isRunning != null) {
-      if (isRunning) {
-        msgStatus = 'Is running';
-      } else {
-        msgStatus = 'Is not running';
-      }
+    if (isRunning) {
+      msgStatus = 'Is running';
+    } else {
+      msgStatus = 'Is not running';
     }
     final status = Text("Status: $msgStatus");
 
     final log = Text(
       logStr,
     );
-    final locationWidget = lastLocation == null ? Text('No location') :
-        Text('${lastLocation!.latitude} - ${lastLocation!.longitude}');
+    final locationWidget = lastLocation == null
+        ? Text('No location')
+        : Text('${lastLocation!.latitude} - ${lastLocation!.longitude}');
 
     return MaterialApp(
       home: Scaffold(
@@ -150,7 +149,14 @@ class _MyAppState extends State<MyApp> {
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[start, stop, clear, status, log, locationWidget],
+              children: <Widget>[
+                start,
+                stop,
+                clear,
+                status,
+                log,
+                locationWidget
+              ],
             ),
           ),
         ),
@@ -181,26 +187,19 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<bool> _checkLocationPermission() async {
-    final access = await LocationPermissions().checkPermissionStatus();
+    final access = await Permission.location.status;
     switch (access) {
-      case PermissionStatus.unknown:
       case PermissionStatus.denied:
       case PermissionStatus.restricted:
-        final permission = await LocationPermissions().requestPermissions(
-          permissionLevel: LocationPermissionLevel.locationAlways,
-        );
+        final permission = await Permission.locationAlways.request();
         if (permission == PermissionStatus.granted) {
           return true;
-        } else {
-          return false;
         }
-        break;
+        return false;
       case PermissionStatus.granted:
         return true;
-        break;
       default:
         return false;
-        break;
     }
   }
 
