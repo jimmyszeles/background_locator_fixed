@@ -20,9 +20,3 @@ tasks.register("clean", Delete) {
 buildscript {
     ext.kotlin_version = '2.0.0'
 }
-
-configurations.all {
-    resolutionStrategy {
-        force 'androidx.core:core-ktx:1.6.0'
-    }
-}
