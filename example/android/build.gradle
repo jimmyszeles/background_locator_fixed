@@ -3,6 +3,15 @@ allprojects {
         google()
         mavenCentral()
     }
+    afterEvaluate { project ->
+        if (project.hasProperty("kotlin")) {
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+                kotlinOptions {
+                    jvmTarget = "1.8"
+                }
+            }
+        }
+    }
 }
 
 rootProject.buildDir = '../build'
