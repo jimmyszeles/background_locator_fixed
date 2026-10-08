@@ -23,7 +23,7 @@ static BackgroundLocatorPlugin *instance = nil;
     @synchronized(self) {
         if (instance == nil) {
             instance = [[BackgroundLocatorPlugin alloc] init:registrar];
-            [registrar addApplicationDelegate:instance];
+            [registrar addSceneDelegate:instance];
         }
     }
 }
@@ -54,8 +54,9 @@ static BackgroundLocatorPlugin *instance = nil;
 
 //https://medium.com/@calvinlin_96474/ios-11-continuous-background-location-update-by-swift-4-12ce3ac603e3
 // iOS will launch the app when new location received
-- (BOOL)application:(UIApplication *)application
-didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+- (BOOL)application:(UIApplication *)scene
+        willConnectToSession:(UISceneSession*)session
+                     options:(nullable UISceneConnectionOptions*)connectionOptions {
     // Check to see if we're being launched due to a location event.
     if (launchOptions[UIApplicationLaunchOptionsLocationKey] != nil) {
         // Restart the headless service.
@@ -72,7 +73,7 @@ didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     return YES;
 }
 
-- (void)applicationDidEnterBackground:(UIApplication *)application {
+- (void)sceneDidEnterBackground:(UIScene*)scene {
     if ([PreferencesManager isServiceRunning]) {
         [_locationManager startMonitoringSignificantLocationChanges];
     }
