@@ -23,6 +23,10 @@ static BackgroundLocatorPlugin *instance = nil;
     @synchronized(self) {
         if (instance == nil) {
             instance = [[BackgroundLocatorPlugin alloc] init:registrar];
+            // Keep the application delegate for events that are not UI related
+            // (applicationWillTerminate) and for apps that haven't adopted UIScene yet.
+            [registrar addApplicationDelegate:instance];
+            // Scene lifecycle events (scene:willConnectToSession:options:, sceneDidEnterBackground:).
             [registrar addSceneDelegate:instance];
         }
     }
@@ -42,7 +46,7 @@ static BackgroundLocatorPlugin *instance = nil;
     if (_callbackChannel == nil || isolateId == nil) {
         return;
     }
-    
+
     [_callbackChannel invokeMethod:method arguments:arguments];
 }
 
@@ -54,22 +58,48 @@ static BackgroundLocatorPlugin *instance = nil;
 
 //https://medium.com/@calvinlin_96474/ios-11-continuous-background-location-update-by-swift-4-12ce3ac603e3
 // iOS will launch the app when new location received
-- (BOOL)application:(UIApplication *)scene
-        willConnectToSession:(UISceneSession*)session
-                     options:(nullable UISceneConnectionOptions*)connectionOptions {
-    // Check to see if we're being launched due to a location event.
+
+// Location-triggered (background) launch.
+// After adopting UIScene, Flutter passes nil launch options to plugins, so the host app's
+// AppDelegate must call this from its own application:didFinishLaunchingWithOptions:,
+// where UIKit still provides the real launchOptions.
+- (void)handleLocationLaunchWithOptions:(NSDictionary *)launchOptions {
     if (launchOptions[UIApplicationLaunchOptionsLocationKey] != nil) {
         // Restart the headless service.
         [self startLocatorService:[PreferencesManager getCallbackDispatcherHandle]];
         [PreferencesManager setObservingRegion:YES];
-    } else if([PreferencesManager isObservingRegion]) {
+    }
+}
+
+// Normal launch by the user (UI) while a region was being observed.
+- (void)resumeUpdatesAfterUserLaunchIfNeeded {
+    if ([PreferencesManager isObservingRegion]) {
         [self prepareLocationManager];
         [self removeLocator];
         [PreferencesManager setObservingRegion:NO];
         [_locationManager startUpdatingLocation];
     }
-    
+}
+
+// UIScene lifecycle: the scene is connected when the app is launched with a UI.
+- (BOOL)scene:(UIScene *)scene
+willConnectToSession:(UISceneSession *)session
+        options:(nullable UISceneConnectionOptions *)connectionOptions {
+    [self resumeUpdatesAfterUserLaunchIfNeeded];
     // Note: if we return NO, this vetos the launch of the application.
+    return YES;
+}
+
+// Legacy (non-UIScene) lifecycle, kept for host apps that haven't migrated.
+// Apps that did migrate get nil options here, which is harmless: the location branch
+// is skipped and the user-launch branch is a no-op once the scene method has run.
+- (BOOL)application:(UIApplication *)application
+didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    if (launchOptions[UIApplicationLaunchOptionsLocationKey] != nil) {
+        [self handleLocationLaunchWithOptions:launchOptions];
+    } else {
+        [self resumeUpdatesAfterUserLaunchIfNeeded];
+    }
     return YES;
 }
 
@@ -99,7 +129,7 @@ static BackgroundLocatorPlugin *instance = nil;
 - (void) prepareLocationMap:(CLLocation*) location {
     _lastLocation = location;
     NSDictionary<NSString*,NSNumber*>* locationMap = [Util getLocationMap:location];
-    
+
     [self sendLocationEvent:locationMap];
 }
 
@@ -127,28 +157,28 @@ static BackgroundLocatorPlugin *instance = nil;
     if (_callbackChannel == nil || isolateId == nil) {
         return;
     }
-    
+
     NSDictionary *map = @{
-                     kArgCallback : @([PreferencesManager getCallbackHandle:kCallbackKey]),
-                     kArgLocation: location
-                     };
+            kArgCallback : @([PreferencesManager getCallbackHandle:kCallbackKey]),
+            kArgLocation: location
+    };
     [_callbackChannel invokeMethod:kBCMSendLocation arguments:map];
 }
 
 - (instancetype)init:(NSObject<FlutterPluginRegistrar> *)registrar {
     self = [super init];
-    
+
     _headlessRunner = [[FlutterEngine alloc] initWithName:@"LocatorIsolate" project:nil allowHeadlessExecution:YES];
     _registrar = registrar;
     [self prepareLocationManager];
-    
+
     _mainChannel = [FlutterMethodChannel methodChannelWithName:kChannelId
                                                binaryMessenger:[registrar messenger]];
     [registrar addMethodCallDelegate:self channel:_mainChannel];
-    
+
     _callbackChannel =
-    [FlutterMethodChannel methodChannelWithName:kBackgroundChannelId
-                                binaryMessenger:[_headlessRunner binaryMessenger] ];
+            [FlutterMethodChannel methodChannelWithName:kBackgroundChannelId
+                                        binaryMessenger:[_headlessRunner binaryMessenger] ];
     return self;
 }
 
@@ -164,7 +194,7 @@ static BackgroundLocatorPlugin *instance = nil;
     [PreferencesManager setCallbackDispatcherHandle:handle];
     FlutterCallbackInformation *info = [FlutterCallbackCache lookupCallbackInformation:handle];
     NSAssert(info != nil, @"failed to find callback");
-    
+
     NSString *entrypoint = info.callbackName;
     NSString *uri = info.callbackLibraryPath;
     [_headlessRunner runWithEntrypoint:entrypoint libraryURI:uri];
@@ -187,7 +217,7 @@ static BackgroundLocatorPlugin *instance = nil;
         disposeCallback:(int64_t)disposeCallback
                settings: (NSDictionary*)settings {
     [self->_locationManager requestAlwaysAuthorization];
-        
+
     long accuracyKey = [[settings objectForKey:kSettingsAccuracy] longValue];
     CLLocationAccuracy accuracy = [Util getAccuracy:accuracyKey];
     double distanceFilter= [[settings objectForKey:kSettingsDistanceFilter] doubleValue];
@@ -196,27 +226,27 @@ static BackgroundLocatorPlugin *instance = nil;
 
     _locationManager.desiredAccuracy = accuracy;
     _locationManager.distanceFilter = distanceFilter;
-    
+
     if (@available(iOS 11.0, *)) {
-      _locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator;
+        _locationManager.showsBackgroundLocationIndicator = showsBackgroundLocationIndicator;
     }
-    
+
     if (@available(iOS 9.0, *)) {
         _locationManager.allowsBackgroundLocationUpdates = YES;
     }
-    
+
     [PreferencesManager saveDistanceFilter:distanceFilter];
     [PreferencesManager setStopWithTerminate:stopWithTerminate];
 
     [PreferencesManager setCallbackHandle:callback key:kCallbackKey];
-    
+
     InitPluggable *initPluggable = [[InitPluggable alloc] init];
     [initPluggable setCallback:initCallback];
     [initPluggable onServiceStart:initialDataDictionary];
-    
+
     DisposePluggable *disposePluggable = [[DisposePluggable alloc] init];
     [disposePluggable setCallback:disposeCallback];
-        
+
     [_locationManager startUpdatingLocation];
     [_locationManager startMonitoringSignificantLocationChanges];
 }
@@ -225,21 +255,21 @@ static BackgroundLocatorPlugin *instance = nil;
     if (_locationManager == nil) {
         return;
     }
-    
+
     @synchronized (self) {
         [_locationManager stopUpdatingLocation];
-        
+
         if (@available(iOS 9.0, *)) {
             _locationManager.allowsBackgroundLocationUpdates = NO;
         }
-        
+
         [_locationManager stopMonitoringSignificantLocationChanges];
 
         for (CLRegion* region in [_locationManager monitoredRegions]) {
             [_locationManager stopMonitoringForRegion:region];
         }
     }
-    
+
     DisposePluggable *disposePluggable = [[DisposePluggable alloc] init];
     [disposePluggable onServiceDispose];
 }

@@ -2,7 +2,7 @@
 #import <CoreLocation/CoreLocation.h>
 #import "MethodCallHelper.h"
 
-@interface BackgroundLocatorPlugin : NSObject<FlutterPlugin, CLLocationManagerDelegate, MethodCallHelperDelegate>
+@interface BackgroundLocatorPlugin : NSObject<FlutterPlugin, CLLocationManagerDelegate, MethodCallHelperDelegate, FlutterSceneLifeCycleDelegate>
 
 + (BackgroundLocatorPlugin*_Nullable) getInstance;
 - (void)invokeMethod:(NSString*_Nonnull)method arguments:(id _Nullable)arguments;
